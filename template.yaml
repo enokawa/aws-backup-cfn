@@ -1,0 +1,30 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Backup Plan template"
+Resources:
+  CreateBackupPlan:
+    Type: AWS::Backup::BackupPlan
+    Properties: 
+      BackupPlan: 
+        BackupPlanName: "ami-backup"
+        BackupPlanRule:
+          -
+            CompletionWindowMinutes: 10080
+            Lifecycle: 
+              DeleteAfterDays: 2
+            RuleName: "daily-ami-backup"
+            ScheduleExpression: "cron(0 21 ? * * *)"
+            StartWindowMinutes: 480
+            TargetBackupVault: "Default"
+  CreateBackupSelection:
+    Type: "AWS::Backup::BackupSelection"
+    Properties:
+      BackupSelection:
+        SelectionName: "ec2"
+        IamRoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/service-role/AWSBackupDefaultServiceRole"
+        ListOfTags:
+          -
+            ConditionType: "STRINGEQUALS"
+            ConditionKey: "backup"
+            ConditionValue: "true"
+      BackupPlanId: !Ref CreateBackupPlan
+    DependsOn: CreateBackupPlan
